@@ -1,0 +1,28 @@
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.8.4
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6333:6333"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  chatbot:
+    build:
+      context: ..
+      dockerfile: Chatbot/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+      - TOKENIZERS_PARALLELISM=false
+    ports:
+      - "8000:8000"
+    depends_on:
+      - qdrant
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+
+volumes:
+  qdrant_storage:
+  hf_cache:
