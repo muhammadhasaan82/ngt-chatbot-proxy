@@ -1,28 +1,30 @@
 /**
  * NGT Chatbot Proxy Worker
  *
- * Proxies HTTPS requests from GitHub Pages to the Python backend on a VM.
- * Fixes the "1003 Direct IP access not allowed" error by:
- *   1. Setting an explicit Host header on every subrequest
- *   2. Stripping Cloudflare-internal headers that confuse origin servers
+ * Proxies HTTPS requests from GitHub Pages to the Python backend on a
+ * DigitalOcean droplet.  The browser talks HTTPS → Worker → HTTP → backend.
+ *
+ * IMPORTANT: Do NOT override the Host header with a domain name.
+ * Cloudflare Workers route outbound fetch() through their infrastructure.
+ * If the Host header contains a domain Cloudflare tries to CDN-route it;
+ * when the domain has no Cloudflare zone, it returns 1003.  Letting the
+ * Host default to the IP:port from the URL avoids this.
  *
  * Environment variables (set in wrangler.toml [vars] or dashboard):
- *   BACKEND_IP    – backend IP address, e.g. 165.245.177.103
- *   BACKEND_HOST  – hostname the backend expects in the Host header
+ *   BACKEND_IP    – DigitalOcean droplet public IPv4, e.g. 165.245.177.103
  *   BACKEND_PORT  – backend port, e.g. 8000
  */
 export default {
   async fetch(request, env) {
     // ── Configuration ────────────────────────────────────────────────
-    const BACKEND_IP = env.BACKEND_IP || '165.245.177.103';
-    const BACKEND_HOST = env.BACKEND_HOST || 'api.nexgenteck.com';
+    const BACKEND_IP   = env.BACKEND_IP   || '165.245.177.103';
     const BACKEND_PORT = env.BACKEND_PORT || '8000';
 
     const ALLOWED_ORIGINS = [
       'https://nexgenteck.github.io',
       'https://muhammadhasaan82.github.io',
-      'http://localhost:5173',           // local dev
-      'http://localhost:4173',           // local preview
+      'http://localhost:5173',
+      'http://localhost:4173',
     ];
 
     // ── CORS helpers ─────────────────────────────────────────────────
@@ -46,33 +48,24 @@ export default {
     const incoming  = new URL(request.url);
     const targetUrl = `http://${BACKEND_IP}:${BACKEND_PORT}${incoming.pathname}${incoming.search}`;
 
-    // ── Forward headers with explicit Host ───────────────────────────
-    //    KEY FIX: *set* the Host header to the backend's address instead
-    //    of deleting it.  Without a Host header Cloudflare may intercept
-    //    the sub-request and return 1003.
-    const headers = new Headers(request.headers);
-    headers.set('Host', BACKEND_HOST);
+    // ── Build clean headers ──────────────────────────────────────────
+    //    Only forward the headers the backend actually needs.
+    //    Do NOT set a custom Host header – let it default to the IP:port
+    //    from the URL so Cloudflare passes the request straight through.
+    const headers = new Headers();
+    headers.set('Content-Type', request.headers.get('Content-Type') || 'application/json');
+    headers.set('Accept', request.headers.get('Accept') || 'application/json');
 
-    // Strip Cloudflare-internal headers the origin doesn't need
-    for (const h of [
-      'cf-connecting-ip', 'cf-ray', 'cf-visitor',
-      'cf-worker', 'cf-ew-via', 'cf-ipcountry',
-      'cdn-loop',
-    ]) {
-      headers.delete(h);
-    }
-
-    // Carry the real client IP in a standard header
+    // Carry the real client IP for logging
     const clientIp = request.headers.get('cf-connecting-ip');
     if (clientIp) headers.set('X-Forwarded-For', clientIp);
 
     // ── Proxy the request ────────────────────────────────────────────
     try {
       const backendResponse = await fetch(targetUrl, {
-        method:   request.method,
-        headers:  headers,
-        body:     ['GET', 'HEAD'].includes(request.method) ? undefined : request.body,
-        redirect: 'manual',
+        method:  request.method,
+        headers: headers,
+        body:    ['GET', 'HEAD'].includes(request.method) ? undefined : request.body,
       });
 
       // Attach CORS headers to the backend's response
