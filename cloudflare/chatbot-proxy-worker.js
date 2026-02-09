@@ -4,11 +4,10 @@
  * Proxies HTTPS requests from GitHub Pages to the Python backend on a
  * DigitalOcean droplet.  The browser talks HTTPS → Worker → HTTP → backend.
  *
- * IMPORTANT: Do NOT override the Host header with a domain name.
- * Cloudflare Workers route outbound fetch() through their infrastructure.
- * If the Host header contains a domain Cloudflare tries to CDN-route it;
- * when the domain has no Cloudflare zone, it returns 1003.  Letting the
- * Host default to the IP:port from the URL avoids this.
+ * Cloudflare Workers block outbound fetch() to raw IP addresses (error 1003).
+ * Workaround: use nip.io wildcard DNS so the Worker fetches a proper hostname
+ * (e.g. 165-245-177-103.nip.io) which resolves to the same IP but bypasses
+ * Cloudflare's "Direct IP access not allowed" check.
  *
  * Environment variables (set in wrangler.toml [vars] or dashboard):
  *   BACKEND_IP    – DigitalOcean droplet public IPv4, e.g. 165.245.177.103
@@ -19,6 +18,10 @@ export default {
     // ── Configuration ────────────────────────────────────────────────
     const BACKEND_IP   = env.BACKEND_IP   || '165.245.177.103';
     const BACKEND_PORT = env.BACKEND_PORT || '8000';
+
+    // Convert IP to a nip.io hostname so Cloudflare doesn't block it
+    // 165.245.177.103 → 165-245-177-103.nip.io (resolves to same IP)
+    const BACKEND_HOST = BACKEND_IP.replace(/\./g, '-') + '.nip.io';
 
     const ALLOWED_ORIGINS = [
       'https://nexgenteck.github.io',
@@ -46,7 +49,7 @@ export default {
 
     // ── Build target URL ─────────────────────────────────────────────
     const incoming  = new URL(request.url);
-    const targetUrl = `http://${BACKEND_IP}:${BACKEND_PORT}${incoming.pathname}${incoming.search}`;
+    const targetUrl = `http://${BACKEND_HOST}:${BACKEND_PORT}${incoming.pathname}${incoming.search}`;
 
     // ── Build clean headers ──────────────────────────────────────────
     //    Only forward the headers the backend actually needs.
