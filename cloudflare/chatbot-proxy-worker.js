@@ -1,8 +1,12 @@
 /**
- * NGT Chatbot Proxy Worker
+ * NGT Backend Proxy Worker
  *
- * Proxies HTTPS requests from GitHub Pages to the Python backend on a
+ * Proxies ALL HTTPS requests from GitHub Pages to the backend services on a
  * DigitalOcean droplet.  The browser talks HTTPS → Worker → HTTP → backend.
+ *
+ * Path-prefix routing:
+ *   /chatbot/*  → FastAPI chatbot on BACKEND_IP:CHATBOT_PORT  (strips /chatbot)
+ *   /contact/*  → Express contact API on BACKEND_IP:CONTACT_PORT (strips /contact)
  *
  * Cloudflare Workers block outbound fetch() to raw IP addresses (error 1003).
  * Workaround: use nip.io wildcard DNS so the Worker fetches a proper hostname
@@ -11,17 +15,25 @@
  *
  * Environment variables (set in wrangler.toml [vars] or dashboard):
  *   BACKEND_IP    – DigitalOcean droplet public IPv4, e.g. 165.245.177.103
- *   BACKEND_PORT  – backend port, e.g. 8000
+ *   CHATBOT_PORT  – chatbot backend port, e.g. 8000
+ *   CONTACT_PORT  – contact API port, e.g. 3001
  */
 export default {
   async fetch(request, env) {
     // ── Configuration ────────────────────────────────────────────────
     const BACKEND_IP   = env.BACKEND_IP   || '165.245.177.103';
-    const BACKEND_PORT = env.BACKEND_PORT || '8000';
+    const CHATBOT_PORT = env.CHATBOT_PORT || '8000';
+    const CONTACT_PORT = env.CONTACT_PORT || '3001';
 
     // Convert IP to a nip.io hostname so Cloudflare doesn't block it
     // 165.245.177.103 → 165-245-177-103.nip.io (resolves to same IP)
     const BACKEND_HOST = BACKEND_IP.replace(/\./g, '-') + '.nip.io';
+
+    // Service routing table: path prefix → backend port
+    const SERVICES = {
+      '/chatbot': CHATBOT_PORT,
+      '/contact': CONTACT_PORT,
+    };
 
     const ALLOWED_ORIGINS = [
       'https://nexgenteck.github.io',
@@ -47,9 +59,40 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
+    // ── Route to the correct backend service ─────────────────────────
+    const incoming = new URL(request.url);
+    const path     = incoming.pathname;
+
+    // Find matching service by path prefix
+    let targetPort  = null;
+    let strippedPath = path;
+
+    for (const [prefix, port] of Object.entries(SERVICES)) {
+      if (path === prefix || path.startsWith(prefix + '/')) {
+        targetPort   = port;
+        strippedPath = path.slice(prefix.length) || '/';
+        break;
+      }
+    }
+
+    // No matching service prefix → return helpful info
+    if (!targetPort) {
+      return new Response(
+        JSON.stringify({
+          status: 'ok',
+          worker: 'ngt-backend-proxy',
+          services: Object.keys(SERVICES),
+          usage: 'Prefix your request path with /chatbot or /contact',
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        },
+      );
+    }
+
     // ── Build target URL ─────────────────────────────────────────────
-    const incoming  = new URL(request.url);
-    const targetUrl = `http://${BACKEND_HOST}:${BACKEND_PORT}${incoming.pathname}${incoming.search}`;
+    const targetUrl = `http://${BACKEND_HOST}:${targetPort}${strippedPath}${incoming.search}`;
 
     // ── Build clean headers ──────────────────────────────────────────
     //    Only forward the headers the backend actually needs.
