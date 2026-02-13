@@ -247,6 +247,15 @@ html {
     background-color: #F97316;
   }
 
+/* Chatbot input visibility tweaks */
+.message-input {
+  color: #000;
+}
+
+.message-input::placeholder {
+  color: #9ca3af;
+}
+
   .bg-orange-600 {
     background-color: #EA580C;
   }
