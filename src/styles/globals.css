@@ -468,3 +468,56 @@ html {
   50% { transform: translateX(-20px) translateY(-10px); }
   100% { transform: translateX(0) translateY(0); }
 }
+
+/* Language dropdown: scrollbar track (light gray) + thumb (darker gray, subtle) */
+.language-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.25) #e5e7eb;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+
+.language-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.language-scrollbar::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 9999px;
+}
+
+.language-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 9999px;
+}
+
+.language-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.language-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+/* Dark theme: light track + darker thumb on dark dropdown */
+.dark .language-scrollbar {
+  scrollbar-color: rgba(255, 255, 255, 0.25) #374151;
+}
+
+.dark .language-scrollbar::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark .language-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.dark .language-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.dark .language-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgba(255, 255, 255, 0.45);
+}

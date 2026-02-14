@@ -23,6 +23,17 @@ export const Header: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Prevent body scroll when language dropdown is open (desktop)
+  useEffect(() => {
+    if (isLangOpen) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [isLangOpen]);
+
   const languages: { code: Language; name: string; flag: string }[] = [
     { code: 'en', name: 'English', flag: 'https://flagcdn.com/w20/gb.png' },
     { code: 'ur', name: 'اردو', flag: 'https://flagcdn.com/w20/pk.png' },
@@ -42,6 +53,11 @@ export const Header: React.FC = () => {
     { code: 'ja', name: '日本語', flag: 'https://flagcdn.com/w20/jp.png' },
     { code: 'bn', name: 'বাংলা', flag: 'https://flagcdn.com/w20/bd.png' },
   ];
+
+  const desktopLanguageListHeight = 280;
+  const handleLanguageScroll = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.stopPropagation();
+  };
 
   const services = [
     { name: 'services.ecommerce', path: '/services/ecommerce' },
@@ -150,22 +166,31 @@ export const Header: React.FC = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className={`absolute top-full right-0 mt-2 w-40 ${dropdownBg} rounded-lg shadow-xl py-2`}
+                    className="absolute top-full right-0 mt-2 w-44 z-[60] max-h-[min(320px,calc(100vh-8rem))]"
                   >
-                    {languages.map((lang) => (
-                      <button
-                        key={lang.code}
-                        onClick={() => {
-                          setLanguage(lang.code);
-                          setIsLangOpen(false);
-                        }}
-                        className={`w-full text-left px-4 py-2 ${dropdownHover} transition-colors flex items-center space-x-2 ${language === lang.code ? 'text-orange-500' : textColor
-                          }`}
+                    <div className={`${dropdownBg} rounded-lg shadow-xl overflow-hidden`}>
+                      <div
+                        className="language-scrollbar overflow-y-auto overflow-x-hidden py-2 pr-1 scroll-smooth"
+                        style={{ maxHeight: `${desktopLanguageListHeight}px` }}
+                        onWheel={handleLanguageScroll}
+                        onTouchMove={(e) => e.stopPropagation()}
                       >
-                        <img src={lang.flag} alt={lang.name} className="w-5 h-4 object-cover rounded-sm" />
-                        <span>{lang.name}</span>
-                      </button>
-                    ))}
+                        {languages.map((lang) => (
+                          <button
+                            key={lang.code}
+                            onClick={() => {
+                              setLanguage(lang.code);
+                              setIsLangOpen(false);
+                            }}
+                            className={`w-full text-left px-4 py-2 ${dropdownHover} transition-colors flex items-center space-x-2 ${language === lang.code ? 'text-orange-500' : textColor
+                              }`}
+                          >
+                            <img src={lang.flag} alt={lang.name} className="w-5 h-4 object-cover rounded-sm" />
+                            <span>{lang.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
