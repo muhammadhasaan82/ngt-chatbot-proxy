@@ -115,10 +115,10 @@ export const Home: React.FC = () => {
   ];
 
   const stats = [
-    { number: '750+', labelKey: 'stats.projects' },
-    { number: '450+', labelKey: 'stats.clients' },
-    { number: '85+', labelKey: 'stats.team' },
-    { number: '15+', labelKey: 'stats.experience' },
+    { number: '30+', labelKey: 'stats.projects' },
+    { number: '23+', labelKey: 'stats.clients' },
+    { number: '18', labelKey: 'stats.team' },
+    { number: '3+', labelKey: 'stats.experience' },
   ];
 
   const testimonials = [
