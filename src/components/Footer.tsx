@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router';
-import { Facebook, Twitter, Instagram, Linkedin, Youtube, Mail, Phone, MapPin, Send } from 'lucide-react';
+import { Facebook, X, Instagram, Linkedin, Youtube, Mail, Phone, MapPin, Send } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -51,7 +51,7 @@ export const Footer: React.FC = () => {
                 <Facebook className="w-5 h-5" />
               </a>
               <a href="#" className="hover:text-orange-500 transition-colors">
-                <Twitter className="w-5 h-5" />
+                <X className="w-5 h-5" />
               </a>
               <a href="#" className="hover:text-orange-500 transition-colors">
                 <Instagram className="w-5 h-5" />
@@ -75,7 +75,6 @@ export const Footer: React.FC = () => {
             <h3 className="text-white mb-4">{t('footer.company')}</h3>
             <ul className="space-y-2">
               <li><Link to="/about" className="hover:text-orange-500 transition-colors">{t('nav.about')}</Link></li>
-              <li><Link to="/about#team" className="hover:text-orange-500 transition-colors">{t('about.team')}</Link></li>
               <li><Link to="/about#partners" className="hover:text-orange-500 transition-colors">{t('about.partners')}</Link></li>
               <li><Link to="/portfolio" className="hover:text-orange-500 transition-colors">{t('nav.portfolio')}</Link></li>
               <li><Link to="/blog" className="hover:text-orange-500 transition-colors">{t('nav.blog')}</Link></li>
