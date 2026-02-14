@@ -28,7 +28,7 @@ const translations: Record<Language, Record<string, string>> = {
     'hero.slide1.title': 'Transform Your Workflow With',
     'hero.slide1.subtitle': 'Grow without the overhead. We find, vet, and onboard reliable remote professionals who adapt to your workflow.',
     'hero.slide1.cta': 'Discover More Today',
-    'hero.slide1.cta2': 'Watch a Quick Demo',
+    'hero.slide1.cta2': 'Watch a Quick Intro',
     'hero.slide2.title': 'Smarter Teams, Stronger Results',
     'hero.slide2.subtitle': 'From AI Automation to Web Development, we provide the talent to drive your growth.',
     'hero.slide2.cta': 'Our Services',
