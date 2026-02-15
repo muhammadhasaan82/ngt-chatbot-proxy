@@ -38,6 +38,9 @@ export default {
     const ALLOWED_ORIGINS = [
       'https://nexgenteck.github.io',
       'https://muhammadhasaan82.github.io',
+      'https://nex-gen-teck-github-io.vercel.app',
+      'https://nexgenteck.com',
+      'https://www.nexgenteck.com',
       'http://localhost:5173',
       'http://localhost:4173',
     ];
